@@ -1,29 +1,38 @@
 pipeline {
     agent any
-    environment {
-        TERRAFORM = '/usr/bin/terraform'
-    }
+
 
     stages {
         stage('Checkout') {
             steps {
                 sh 'rm -rf php-deploy || true'
                 checkout scm
-               
+                
             }
         }
         
         stage('Terraform Setup') {
             steps {
-                sh '${TERRAFORM} init'
+                sh '''
+            
+                terraform init 
+                '''
             }
+        }
+        
+     
         }
         
         stage('Terraform Apply') {
             steps {
-                sh '${TERRAFORM} apply -auto-approve'
+                sh '''
+           
+                terraform apply -auto-approve 
+                '''
             }
         }
+        
+ 
         
         stage('Deploy Application') {
             steps {
@@ -44,5 +53,7 @@ pipeline {
                 }
             }
         }
+        
     }
-}
+    
+
