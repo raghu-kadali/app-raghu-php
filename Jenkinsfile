@@ -28,7 +28,7 @@ pipeline {
         stage('Ansible Deploy') {
             steps {
                 sshagent(['ansible-master-ssh-key']) {
-                    mkdir -p ansible
+                    mkdir  ansible
                     dir('ansible') {
                         unstash 'ansible'
                     }
