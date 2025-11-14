@@ -1,12 +1,11 @@
 #!/bin/bash
-
 # Install Docker
 apt update -y
 apt install docker.io -y
 systemctl enable docker
 systemctl start docker
 
-# Authenticate Docker with Artifact Registry (uses instance service account)
+# Authenticate Docker with Artifact Registry
 gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
 
 # Pull and run PHP application container
