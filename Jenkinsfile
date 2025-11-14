@@ -26,65 +26,7 @@ pipeline {
             }
         }
 
-        stage('Deploy Application with Ansible Dynamic Inventory') {
-            steps {
-                sshagent(['ansible-master-ssh-key']) {
-                    withCredentials([file(credentialsId: 'terraform', variable: 'GCP_KEY')]) {
-                        sh '''
-                            cd php-deploy
-                            export GOOGLE_APPLICATION_CREDENTIALS=${GCP_KEY}
-                            
-                            # Get Ansible master IP
-                            ANSIBLE_MASTER_IP=$(gcloud compute instances list --filter="name:ansible-master" --format="value(EXTERNAL_IP)" --project=siva-477505)
-                            echo "Ansible Master IP: $ANSIBLE_MASTER_IP"
-                            
-                            # Wait for SSH to be available
-                            echo "Waiting for SSH to be ready..."
-                            until nc -z $ANSIBLE_MASTER_IP 22; do
-                                sleep 10
-                                echo "Still waiting for SSH..."
-                            done
-                            echo "SSH is ready!"
-                            
-                            echo "Deploying to MIG using dynamic inventory..."
-                            
-                            # Copy Ansible files to the Ansible master
-                            scp -o StrictHostKeyChecking=no -r ansible/ ubuntu@${ANSIBLE_MASTER_IP}:~/
-                            
-                            # Execute Ansible playbook with dynamic inventory against MIG
-                            ssh -o StrictHostKeyChecking=no ubuntu@${ANSIBLE_MASTER_IP} '
-                                cd ansible
-                                chmod +x inventory-gcp.py
-                                
-                                # Install Ansible and dependencies
-                                sudo apt-get update
-                                sudo apt-get install -y ansible python3-pip
-                                pip3 install google-auth requests
-                                
-                                # Run Ansible playbook using dynamic inventory
-                                # This will discover all instances in the MIG automatically
-                                ansible-playbook -i inventory-gcp.py deploy-php.yml
-                                
-                                # Verify deployment
-                                echo "=== Checking deployed instances ==="
-                                ./inventory-gcp.py --list
-                            '
-                        '''
-                    }
-                }
-            }
-        }
+        
     }
 
-    post {
-        always {
-            echo "Pipeline execution completed"
-        }
-        success {
-            echo "✅ Infrastructure deployed and application deployed to MIG using dynamic inventory!"
-        }
-        failure {
-            echo "❌ Pipeline failed"
-        }
-    }
 }
