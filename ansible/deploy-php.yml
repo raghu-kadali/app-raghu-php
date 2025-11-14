@@ -24,3 +24,35 @@
       loop: "{{ instances_json.stdout | from_json }}"
       loop_control:
         label: "{{ item.name }}"
+
+    - name: Verify deployment and check firewall
+      shell: |
+        gcloud compute ssh {{ item.name }} --zone={{ item.zone }} --command="
+          echo '=== Container Status ==='
+          sudo docker ps
+          echo '=== Container Logs ==='
+          sudo docker logs php-app
+          echo '=== Port Check ==='
+          sudo netstat -tuln | grep :80 || sudo ss -tuln | grep :80
+          echo '=== Local Test ==='
+          curl -s http://localhost:80 || echo 'Local access failed'
+        "
+      loop: "{{ instances_json.stdout | from_json }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Check firewall rule
+      shell: |
+        gcloud compute firewall-rules list --filter="name:allow-http"
+      register: firewall_check
+
+    - name: Show firewall status
+      debug:
+        var: firewall_check.stdout
+
+    - name: Create HTTP firewall rule if missing
+      shell: |
+        gcloud compute firewall-rules create allow-http \
+          --allow tcp:80 \
+          --target-tags http-server
+      when: firewall_check.stdout == ""
