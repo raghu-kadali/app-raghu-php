@@ -1,5 +1,8 @@
 pipeline {
     agent any
+    environment {
+        TERRAFORM = '/usr/bin/terraform'
+    }
 
     stages {
         stage('Checkout') {
@@ -12,44 +15,25 @@ pipeline {
         stage('Terraform Setup') {
             steps {
                 sh '''
-                pwd
-                ls -l
-                terraform init 
-                
+            
+                ${TERRAFORM} init 
                 '''
             }
         }
         
-        stage('Terraform Plan') {
-            steps {
-                sh '''
-                cd terraform
-                terraform plan -var-file=${TF_VARS_FILE} -out=tfplan
-                '''
-            }
+     
         }
         
         stage('Terraform Apply') {
             steps {
                 sh '''
-                cd terraform
-                terraform apply -auto-approve tfplan
+           
+                ${TERRAFORM} apply -auto-approve 
                 '''
             }
         }
         
-        stage('Get Infrastructure Info') {
-            steps {
-                script {
-                    dir('terraform') {
-                        env.ANSIBLE_MASTER_IP = sh(
-                            script: 'terraform output -raw ansible_master_ip',
-                            returnStdout: true
-                        ).trim()
-                    }
-                }
-            }
-        }
+ 
         
         stage('Deploy Application') {
             steps {
@@ -73,4 +57,3 @@ pipeline {
         
     }
     
-    }
