@@ -36,6 +36,9 @@
           us-central1-docker.pkg.dev/siva-477505/php-app/php-app:v1
 
     - name: Verify container is running
-      shell: |
-        docker ps
-        docker logs php-app
+      shell: docker ps
+      register: container_status
+
+    - name: Show container status
+      debug:
+        var: container_status.stdout
