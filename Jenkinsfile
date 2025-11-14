@@ -13,7 +13,7 @@ pipeline {
         
         stage('Terraform Setup') {
             steps {
-                sh 'terraform init -input=false'
+                sh 'terraform init'
             }
         }
         
@@ -22,7 +22,7 @@ pipeline {
         
         stage('Terraform Apply') {
             steps {
-                sh 'terraform apply -auto-approve -input=false'
+                sh 'terraform apply -auto-approve '
             }
         }
         
