@@ -27,11 +27,6 @@
       shell: |
         gcloud compute ssh {{ inventory_hostname }} --zone={{ hostvars[inventory_hostname].zone }} --command="
           gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
+          sudo docker run -d --name php-app -p 80:80 us-central1-docker.pkg.dev/siva-477505/php-app/php-app:v1
         "
 
-    - name: Pull and run PHP application container
-      shell: |
-        gcloud compute ssh {{ inventory_hostname }} --zone={{ hostvars[inventory_hostname].zone }} --command="
-          sudo docker pull us-central1-docker.pkg.dev/siva-477505/php-app/php-app:v1
-          sudo docker run -d --name php-app -p 80:80 --restart unless-stopped us-central1-docker.pkg.dev/siva-477505/php-app/php-app:v1
-        "
