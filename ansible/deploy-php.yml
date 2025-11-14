@@ -2,6 +2,7 @@
 - name: Deploy PHP Application on MIG
   hosts: php_servers
   connection: local
+  become: yes
   
   tasks:
     - name: Install Docker
