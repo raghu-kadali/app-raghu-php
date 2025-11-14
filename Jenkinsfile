@@ -15,7 +15,7 @@ pipeline {
                     rm terraform_1.5.7_linux_amd64.zip
                     
                     # Authenticate with the service account (now it has permissions!)
-                    gcloud auth activate-service-account --key-file=/var/lib/jenkins/terraform-key.json
+                    gcloud auth activate-service-account --key-file=/var/lib/jenkins/php/terraform-key.json
                     gcloud config set project siva-477505
                     
                     # Run Terraform
