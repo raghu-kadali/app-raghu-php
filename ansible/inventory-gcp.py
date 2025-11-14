@@ -20,7 +20,7 @@ def get_mig_instances():
                     "ansible_user": "root",
                     "ansible_ssh_pass": "password123",
                     "ansible_become": "yes",
-                    "ansible_ssh_common_args": "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+                    "ansible_ssh_common_args": "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o PreferredAuthentications=password -o PubkeyAuthentication=no"
                 }
             }
         }
