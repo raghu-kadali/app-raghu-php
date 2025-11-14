@@ -1,40 +1,34 @@
 pipeline {
-    agent any
+    agent {
+        docker {
+            image 'hashicorp/terraform:latest'
+            args '-v $WORKSPACE:/workspace -w /workspace'
+        }
+    }
     stages {
         stage('Checkout') {
             steps {
                 checkout scm
             }
         }
-        stage('Install Terraform') {
+        stage('GCP Authentication') {
             steps {
-                sh '''
-                    # Install Terraform without sudo
-                    sudo apt install unzip -y
-                    wget https://releases.hashicorp.com/terraform/1.5.7/terraform_1.5.7_linux_amd64.zip
-                    unzip terraform_1.5.7_linux_amd64.zip -d $HOME/.local/bin/
-                    mkdir -p $HOME/.local/bin
-                    chmod +x $HOME/.local/bin/terraform
-                    export PATH="$HOME/.local/bin:$PATH"
-                    rm terraform_1.5.7_linux_amd64.zip
-                    terraform --version
-                '''
+                withCredentials([file(credentialsId: 'gcp-service-account-key', variable: 'GCP_CREDENTIALS')]) {
+                    sh '''
+                        cp ${GCP_CREDENTIALS} /workspace/credentials.json
+                        export GOOGLE_APPLICATION_CREDENTIALS=/workspace/credentials.json
+                    '''
+                }
             }
         }
         stage('Terraform Setup') {
             steps {
-                sh '''
-                    export PATH="$HOME/.local/bin:$PATH"
-                    terraform init -input=false
-                '''
+                sh 'terraform init -input=false'
             }
         }
         stage('Terraform Apply') {
             steps {
-                sh '''
-                    export PATH="$HOME/.local/bin:$PATH"
-                    terraform apply -auto-approve
-                '''
+                sh 'terraform apply -auto-approve'
             }
         }
     }
