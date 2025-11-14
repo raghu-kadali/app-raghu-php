@@ -16,8 +16,8 @@ def get_mig_instances():
             "php_servers": {
                 "hosts": [],
                 "vars": {
-                    "ansible_user": "root",
-                    "ansible_ssh_pass": "password123"
+                    "ansible_user": "ubuntu",  # or root depending on your setup
+                    "ansible_become": "yes"
                 }
             }
         }
