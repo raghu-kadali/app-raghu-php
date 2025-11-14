@@ -1,13 +1,6 @@
 pipeline {
     agent any
-    
-    environment {
-        // These will be set in Jenkins credentials
-        GCP_PROJECT = credentials('gcp-project')
-        GCP_SA_KEY = credentials('gcp-sa-key')
-        TF_VARS_FILE = 'production.tfvars'
-    }
-    
+
     stages {
         stage('Checkout') {
             steps {
@@ -18,7 +11,7 @@ pipeline {
         stage('Terraform Setup') {
             steps {
                 sh '''
-                cd terraform
+            
                 terraform init -upgrade
                 '''
             }
