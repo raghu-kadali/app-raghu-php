@@ -1,13 +1,11 @@
 pipeline {
     agent any
 
-
     stages {
         stage('Checkout') {
             steps {
                 sh 'rm -rf php-deploy || true'
                 checkout scm
-                
             }
         }
         
@@ -17,16 +15,11 @@ pipeline {
             }
         }
         
-     
-        }
-        
         stage('Terraform Apply') {
             steps {
                 sh 'terraform apply --auto-approve'
             }
         }
-        
- 
         
         stage('Deploy Application') {
             steps {
@@ -47,7 +40,5 @@ pipeline {
                 }
             }
         }
-        
     }
-    
-
+}
