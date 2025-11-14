@@ -25,22 +25,24 @@ pipeline {
             }
         }
         
-        stage('Ansible Deploy') {
+stage('Ansible Deploy') {
     steps {
         sh '''
             cd php-deploy
             export GOOGLE_APPLICATION_CREDENTIALS=${GCP_KEY}
             ANSIBLE_MASTER_IP=$(gcloud compute instances list --filter="name:ansible-master" --format="value(EXTERNAL_IP)" --project=siva-477505)
             
-            # Copy files
-            scp -o StrictHostKeyChecking=no -r ansible/ ansible-master.${ZONE}.c.siva-477505.internal:~/
+            echo "Connecting to Ansible Master at: ${ANSIBLE_MASTER_IP}"
             
-            # SSH and run
-            ssh -o StrictHostKeyChecking=no ansible-master.${ZONE}.c.siva-477505.internal '
+            # Copy ansible files using the external IP
+            scp -o StrictHostKeyChecking=no -r ansible/ ubuntu@${ANSIBLE_MASTER_IP}:~/
+            
+            # SSH using the external IP
+            ssh -o StrictHostKeyChecking=no ubuntu@${ANSIBLE_MASTER_IP} "
                 cd ~/ansible
                 chmod +x inventory-gcp.py
                 ansible-playbook -i inventory-gcp.py deploy-php.yml
-            '
+            "
         '''
     }
 }
