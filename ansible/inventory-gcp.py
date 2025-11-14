@@ -17,9 +17,9 @@ def get_mig_instances():
             "php_servers": {
                 "hosts": [],
                 "vars": {
-                    # No user specified - let OS Login handle authentication
+                    "ansible_user": "ubuntu",  # Force ubuntu user
                     "ansible_become": "yes",
-                    "ansible_ssh_common_args": "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+                    "ansible_ssh_common_args": "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o IdentitiesOnly=yes -o PreferredAuthentications=publickey"
                 }
             }
         }
