@@ -5,7 +5,7 @@ import sys
 
 def get_mig_instances():
     try:
-        # Get instances from MIG with external IPs directly
+        # Get instances
         cmd = [
             "gcloud", "compute", "instances", "list",
             "--filter=name:php-instance-*", 
@@ -19,12 +19,13 @@ def get_mig_instances():
                 "vars": {
                     "ansible_user": "ubuntu",
                     "ansible_become": "yes",
-                    "ansible_ssh_common_args": "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+                    "ansible_ssh_common_args": "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null",
+                    "ansible_ssh_pass": "password123",
+                    "ansible_become_pass": "password123"
                 }
             }
         }
         
-        # Add IPs directly
         ips = result.stdout.strip().split('\n')
         for ip in ips:
             if ip.strip():
@@ -33,6 +34,7 @@ def get_mig_instances():
         return inventory
         
     except Exception as e:
+        print(f"Error: {e}", file=sys.stderr)
         return {"php_servers": {"hosts": []}}
 
 if __name__ == "__main__":
