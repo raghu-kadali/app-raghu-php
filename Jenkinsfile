@@ -7,8 +7,9 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                checkout scm
                 sh 'rm -rf php-deploy || true'
+                checkout scm
+               
             }
         }
         
