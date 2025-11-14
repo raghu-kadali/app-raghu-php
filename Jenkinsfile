@@ -9,10 +9,12 @@ pipeline {
         stage('Install Terraform') {
             steps {
                 sh '''
-                    # Install Terraform
+                    # Install Terraform without sudo
                     wget https://releases.hashicorp.com/terraform/1.5.7/terraform_1.5.7_linux_amd64.zip
-                    sudo unzip terraform_1.5.7_linux_amd64.zip -d /usr/local/bin/
-                    sudo chmod +x /usr/local/bin/terraform
+                    unzip terraform_1.5.7_linux_amd64.zip -d $HOME/.local/bin/
+                    mkdir -p $HOME/.local/bin
+                    chmod +x $HOME/.local/bin/terraform
+                    export PATH="$HOME/.local/bin:$PATH"
                     rm terraform_1.5.7_linux_amd64.zip
                     terraform --version
                 '''
@@ -20,12 +22,18 @@ pipeline {
         }
         stage('Terraform Setup') {
             steps {
-                sh 'terraform init -input=false'
+                sh '''
+                    export PATH="$HOME/.local/bin:$PATH"
+                    terraform init -input=false
+                '''
             }
         }
         stage('Terraform Apply') {
             steps {
-                sh 'terraform apply -auto-approve'
+                sh '''
+                    export PATH="$HOME/.local/bin:$PATH"
+                    terraform apply -auto-approve
+                '''
             }
         }
     }
