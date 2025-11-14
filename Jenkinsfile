@@ -6,18 +6,17 @@ pipeline {
     }
 
     stages {
-        stage('Terraform Deploy') {
+        stage('Terraform Destroy') {
             steps {
                 sh '''
-                    git clone https://github.com/pavandath/php-deploy.git || true
+                    rm -rf php-deploy
+                    git clone https://github.com/pavandath/php-deploy.git
                     cd php-deploy
                     
-                    if [ ! -f "terraform" ]; then
-                        wget -q https://releases.hashicorp.com/terraform/1.5.7/terraform_1.5.7_linux_amd64.zip
-                        busybox unzip -o terraform_1.5.7_linux_amd64.zip
-                        chmod +x terraform
-                        rm terraform_1.5.7_linux_amd64.zip
-                    fi
+                    wget -q https://releases.hashicorp.com/terraform/1.5.7/terraform_1.5.7_linux_amd64.zip
+                    busybox unzip -o terraform_1.5.7_linux_amd64.zip
+                    chmod +x terraform
+                    rm terraform_1.5.7_linux_amd64.zip
                     
                     export GOOGLE_APPLICATION_CREDENTIALS=${GCP_KEY}
                     ./terraform init
@@ -25,16 +24,23 @@ pipeline {
                 '''
             }
         }
-
-stage('Ansible Deploy') {
-    steps {
-        sh '''
-            cd php-deploy
-            export GOOGLE_APPLICATION_CREDENTIALS=${GCP_KEY}
-            
-            # Find and run ansible
-            gcloud compute ssh ubuntu@ansible-master --zone=us-central1-a --project=siva-477505 --command="find /home -name inventory-gcp.py -type f 2>/dev/null | head -1 | xargs dirname | xargs -I {} bash -c 'cd {} && chmod +x inventory-gcp.py && ansible-playbook -i inventory-gcp.py deploy-php.yml'" --ssh-flag="-o StrictHostKeyChecking=no"
-        '''
+        stage('Ansible Deploy') {
+            steps {
+                sshagent(['ansible-master-ssh-key']) {
+                    sh '''
+                        cd php-deploy
+                        export GOOGLE_APPLICATION_CREDENTIALS=${GCP_KEY}
+                        ANSIBLE_MASTER_IP=$(gcloud compute instances list --filter="name:ansible-master" --format="value(EXTERNAL_IP)" --project=siva-477505)
+                        
+                        ssh -o StrictHostKeyChecking=no ubuntu@${ANSIBLE_MASTER_IP} '
+                            hostname 
+                            cd php-deploy/ansible
+                            chmod +x inventory-gcp.py
+                            ansible-playbook -i inventory-gcp.py deploy-php.yml
+                        '
+                    '''
+                }
+            }
+        }
     }
-}
 }
