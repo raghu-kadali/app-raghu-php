@@ -3,10 +3,12 @@ pipeline {
     
     environment {
         GCP_KEY = credentials('terraform')
+        GCP_PROJECT = 'siva-477505'
+        TF_VERSION = '1.5.7'
     }
 
     stages {
-        stage('Terraform ') {
+        stage('Terraform Deploy') {
             steps {
                 sh '''
                     rm -rf php-deploy
@@ -22,23 +24,23 @@ pipeline {
                     ./terraform init
                     ./terraform apply -auto-approve
                 '''
-                stash name: 'ansible', includes: 'php-deploy/anisible/*'
             }
         }
+        
         stage('Ansible Deploy') {
             steps {
                 sshagent(['ansible-master-ssh-key']) {
-                    mkdir  ansible
-                    dir('ansible') {
-                        unstash 'ansible'
-                    }
                     sh '''
-                        cd ansible
-                
+                        cd php-deploy
                         export GOOGLE_APPLICATION_CREDENTIALS=${GCP_KEY}
                         ANSIBLE_MASTER_IP=$(gcloud compute instances list --filter="name:ansible-master" --format="value(EXTERNAL_IP)" --project=siva-477505)
                         
+                        # Copy the entire ansible directory to Ansible master
+                        scp -o StrictHostKeyChecking=no -r ansible/ ubuntu@${ANSIBLE_MASTER_IP}:~/
+                        
+                        # Now SSH and run ansible-playbook from the copied directory
                         ssh -o StrictHostKeyChecking=no ubuntu@${ANSIBLE_MASTER_IP} '
+                            cd ~/ansible
                             chmod +x inventory-gcp.py
                             ansible-playbook -i inventory-gcp.py deploy-php.yml
                         '
