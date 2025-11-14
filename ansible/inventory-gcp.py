@@ -5,7 +5,7 @@ import sys
 
 def get_mig_instances():
     try:
-        # Get instances with external IPs for direct SSH
+        # Get external IPs for direct SSH
         cmd = [
             "gcloud", "compute", "instances", "list",
             "--filter=name:php-instance-*", 
@@ -17,7 +17,7 @@ def get_mig_instances():
             "php_servers": {
                 "hosts": [],
                 "vars": {
-                    "ansible_user": "root",  # Use root since we set password
+                    "ansible_user": "root",
                     "ansible_ssh_pass": "password123",
                     "ansible_become": "yes",
                     "ansible_ssh_common_args": "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
