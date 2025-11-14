@@ -1,0 +1,45 @@
+---
+- name: Configure PHP Application Server
+  hosts: localhost
+  become: yes
+  
+  tasks:
+    - name: Install Docker
+      apt:
+        name: docker.io
+        state: present
+        update_cache: yes
+
+    - name: Start and enable Docker service
+      systemd:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Ensure old container is removed
+      shell: docker rm -f php-app || true
+      ignore_errors: yes
+
+    - name: Pull PHP application image from Artifact Registry
+      docker_image:
+        name: "{{ image_uri }}"
+        source: pull
+
+    - name: Run PHP application container
+      docker_container:
+        name: php-app
+        image: "{{ image_uri }}"
+        state: started
+        ports:
+          - "80:80"
+        log_driver: gcplogs
+        log_options:
+          gcp-project: "{{ project }}"
+
+    - name: Verify container is running
+      shell: docker ps | grep php-app
+      register: container_status
+      failed_when: container_status.rc != 0
+
+    - debug:
+        msg: "PHP application container is running successfully"
