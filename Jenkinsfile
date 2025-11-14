@@ -26,29 +26,23 @@ pipeline {
         }
         
         stage('Ansible Deploy') {
-            steps {
-                sh '''
-                    cd php-deploy
-                    export GOOGLE_APPLICATION_CREDENTIALS=${GCP_KEY}
-                    
-                    # Get the zone dynamically
-                    ZONE=$(gcloud compute instances list --filter="name:ansible-master" --format="value(ZONE)" --project=siva-477505)
-                    
-                    echo "Using zone: ${ZONE}"
-                    
-                    # Copy files using gcloud scp with instance name
-                    gcloud compute scp --recurse ansible/ ansible-master:~/ --zone=${ZONE} --project=siva-477505
-                    
-                    # Run commands using gcloud ssh with instance name
-                    gcloud compute ssh ansible-master --zone=${ZONE} --project=siva-477505 --command='
-                        cd ~/ansible
-                        sudo apt-get update
-                        sudo apt-get install -y sshpass
-                        chmod +x inventory-gcp.py
-                        ansible-playbook -i inventory-gcp.py deploy-php.yml
-                    '
-                '''
-            }
-        }
+    steps {
+        sh '''
+            cd php-deploy
+            export GOOGLE_APPLICATION_CREDENTIALS=${GCP_KEY}
+            
+            ZONE=$(gcloud compute instances list --filter="name:ansible-master" --format="value(ZONE)" --project=siva-477505)
+            
+            gcloud compute scp --recurse ansible/ ansible-master:~/ --zone=${ZONE} --project=siva-477505
+            
+            gcloud compute ssh ansible-master --zone=${ZONE} --project=siva-477505 --command='
+                cd ~/ansible
+                chmod +x gcloud-ssh.sh
+                chmod +x inventory-gcp.py
+                ANSIBLE_SSH_EXECUTABLE=./gcloud-ssh.sh ansible-playbook -i inventory-gcp.py deploy-php.yml
+            '
+        '''
+    }
+}
     }
 }
