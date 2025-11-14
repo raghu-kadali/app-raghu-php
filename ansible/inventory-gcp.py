@@ -3,6 +3,7 @@ import subprocess
 import json
 import sys
 import os
+import time
 
 def setup_ssh_keys():
     """Automatically set up SSH keys for all PHP instances"""
@@ -34,6 +35,14 @@ def setup_ssh_keys():
                 instance_name = instance["name"]
                 zone = instance["zone"].split("/")[-1]
                 
+                # Remove any existing ubuntu SSH keys first
+                subprocess.run([
+                    "gcloud", "compute", "instances", "remove-metadata", instance_name,
+                    f"--zone={zone}",
+                    "--keys=ssh-keys",
+                    "--quiet"
+                ], capture_output=True, timeout=10)
+                
                 # Add SSH key to instance metadata
                 subprocess.run([
                     "gcloud", "compute", "instances", "add-metadata", instance_name,
@@ -42,6 +51,21 @@ def setup_ssh_keys():
                     "--quiet"
                 ], capture_output=True, timeout=10)
                 print(f"Added SSH key to {instance_name}", file=sys.stderr)
+                
+                # Wait for metadata to apply
+                time.sleep(10)
+                
+                # Test SSH connection
+                test_ip = instance["networkInterfaces"][0]["accessConfigs"][0]["natIP"]
+                test_cmd = [
+                    "ssh", "-i", ssh_key_path, "-o", "StrictHostKeyChecking=no",
+                    "-o", "ConnectTimeout=10", f"ubuntu@{test_ip}", "echo 'SSH successful'"
+                ]
+                test_result = subprocess.run(test_cmd, capture_output=True, text=True, timeout=15)
+                if test_result.returncode == 0:
+                    print(f"SSH test successful for {test_ip}", file=sys.stderr)
+                else:
+                    print(f"SSH test failed for {test_ip}: {test_result.stderr}", file=sys.stderr)
         
         return ssh_key_path
         
@@ -70,7 +94,7 @@ def get_mig_instances():
                 "vars": {
                     "ansible_user": "ubuntu",
                     "ansible_become": "yes",
-                    "ansible_ssh_common_args": "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null",
+                    "ansible_ssh_common_args": "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=30",
                     "ansible_ssh_private_key_file": ssh_key_path if ssh_key_path else "~/.ssh/ansible_key"
                 }
             }
