@@ -19,22 +19,60 @@
         enabled: yes
       delegate_to: "{{ inventory_hostname }}"
 
+    - name: Check if Docker is actually working
+      shell: docker --version
+      delegate_to: "{{ inventory_hostname }}"
+      register: docker_version
+
+    - name: Debug Docker version
+      debug:
+        var: docker_version.stdout
+
+    - name: Check current Docker images
+      shell: docker images
+      delegate_to: "{{ inventory_hostname }}"
+      register: current_images
+
+    - name: Debug current images
+      debug:
+        var: current_images.stdout
+
     - name: Configure Docker with Artifact Registry
       command: gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
       delegate_to: "{{ inventory_hostname }}"
 
-    - name: Pull PHP application image
-      docker_image:
-        name: us-central1-docker.pkg.dev/siva-477505/php-app/php-app:v1
-        source: pull
+    - name: Pull PHP application image with verbose output
+      shell: docker pull us-central1-docker.pkg.dev/siva-477505/php-app/php-app:v1
       delegate_to: "{{ inventory_hostname }}"
+      register: pull_result
 
-    - name: Run PHP application container
-      docker_container:
-        name: php-app
-        image: us-central1-docker.pkg.dev/siva-477505/php-app/php-app:v1
-        state: started
-        restart_policy: unless-stopped
-        ports:
-          - "80:80"
+    - name: Debug pull result
+      debug:
+        var: pull_result.stdout
+
+    - name: Check images after pull
+      shell: docker images
       delegate_to: "{{ inventory_hostname }}"
+      register: images_after_pull
+
+    - name: Debug images after pull
+      debug:
+        var: images_after_pull.stdout
+
+    - name: Run PHP application container with verbose output
+      shell: docker run -d --name php-app -p 80:80 us-central1-docker.pkg.dev/siva-477505/php-app/php-app:v1
+      delegate_to: "{{ inventory_hostname }}"
+      register: run_result
+
+    - name: Debug run result
+      debug:
+        var: run_result.stdout
+
+    - name: Check running containers
+      shell: docker ps
+      delegate_to: "{{ inventory_hostname }}"
+      register: running_containers
+
+    - name: Debug running containers
+      debug:
+        var: running_containers.stdout
