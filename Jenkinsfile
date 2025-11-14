@@ -26,17 +26,17 @@ pipeline {
             }
         }
 
-        stage('Ansible Deploy') {
-            steps {
-                sh '''
-                    cd php-deploy
-                    export GOOGLE_APPLICATION_CREDENTIALS=${GCP_KEY}
-                    ANSIBLE_MASTER_IP=$(gcloud compute instances list --filter="name:ansible-master" --format="value(EXTERNAL_IP)" --project=siva-477505)
-                    
-                    echo "Ansible Master IP: $ANSIBLE_MASTER_IP"
-                    echo "Skipping Ansible deployment due to Jenkins internal error"
-                '''
-            }
-        }
+       stage('Ansible Deploy') {
+    steps {
+        sh '''
+            cd php-deploy
+            export GOOGLE_APPLICATION_CREDENTIALS=${GCP_KEY}
+            
+            # One-liner with SSH flags
+            gcloud compute ssh ubuntu@ansible-master --zone=us-central1-a --project=siva-477505 --command="cd php-deploy/ansible && chmod +x inventory-gcp.py && ansible-playbook -i inventory-gcp.py deploy-php.yml" --ssh-flag="-o StrictHostKeyChecking=no" --ssh-flag="-o UserKnownHostsFile=/dev/null"
+        '''
+    }
+}
+
     }
 }
