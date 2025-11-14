@@ -12,8 +12,10 @@ pipeline {
         stage('Terraform Setup') {
             steps {
                 sh '''
-            
+                pwd
+                ls -l
                 terraform init 
+                
                 '''
             }
         }
