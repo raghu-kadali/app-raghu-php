@@ -1,6 +1,19 @@
 pipeline {
     agent any
     stages {
+        stage('Clean Existing Resources') {
+            steps {
+                withCredentials([file(credentialsId: 'terraform', variable: 'GCP_KEY')]) {
+                    sh '''
+                        gcloud auth activate-service-account --key-file=${GCP_KEY}
+                        gcloud config set project siva-477505
+                        
+                        # Delete the existing service account
+                        gcloud iam service-accounts delete php-instance@siva-477505.iam.gserviceaccount.com --quiet || echo "Service account already deleted or doesn't exist"
+                    '''
+                }
+            }
+        }
         stage('Terraform Deploy') {
             steps {
                 withCredentials([file(credentialsId: 'terraform', variable: 'GCP_KEY')]) {
@@ -18,10 +31,6 @@ pipeline {
                         gcloud config set project siva-477505
                         
                         ./terraform init
-                        
-                        # Try to import, if it fails continue anyway
-                        ./terraform import google_service_account.instance_sa "projects/siva-477505/serviceAccounts/php-instance@siva-477505.iam.gserviceaccount.com" || echo "Import may have failed, continuing..."
-                        
                         ./terraform apply -auto-approve
                     '''
                 }
