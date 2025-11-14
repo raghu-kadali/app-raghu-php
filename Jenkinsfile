@@ -29,29 +29,6 @@ pipeline {
             }
         }
 
-        stage('Get Ansible Master IP') {
-            steps {
-                withCredentials([file(credentialsId: 'terraform', variable: 'GCP_KEY')]) {
-                    sh '''
-                        cd php-deploy
-                        export GOOGLE_APPLICATION_CREDENTIALS=${GCP_KEY}
-                        
-                        # Get the Ansible master IP from Terraform output
-                        ANSIBLE_MASTER_IP=$(./terraform output -raw ansible_master_ip)
-                        echo "Ansible Master IP: $ANSIBLE_MASTER_IP"
-                        
-                        # Wait for SSH to be available
-                        echo "Waiting for SSH to be ready..."
-                        until nc -z $ANSIBLE_MASTER_IP 22; do
-                            sleep 10
-                            echo "Still waiting for SSH..."
-                        done
-                        echo "SSH is ready!"
-                    '''
-                }
-            }
-        }
-
         stage('Deploy Application with Ansible') {
             steps {
                 sshagent(['ansible-master-ssh-key']) {
@@ -59,7 +36,18 @@ pipeline {
                         sh '''
                             cd php-deploy
                             export GOOGLE_APPLICATION_CREDENTIALS=${GCP_KEY}
-                            ANSIBLE_MASTER_IP=$(./terraform output -raw ansible_master_ip)
+                            
+                            # Get Ansible master IP directly using gcloud
+                            ANSIBLE_MASTER_IP=$(gcloud compute instances list --filter="name:ansible-master" --format="value(EXTERNAL_IP)" --project=siva-477505)
+                            echo "Ansible Master IP: $ANSIBLE_MASTER_IP"
+                            
+                            # Wait for SSH to be available
+                            echo "Waiting for SSH to be ready..."
+                            until nc -z $ANSIBLE_MASTER_IP 22; do
+                                sleep 10
+                                echo "Still waiting for SSH..."
+                            done
+                            echo "SSH is ready!"
                             
                             echo "Deploying to Ansible Master: $ANSIBLE_MASTER_IP"
                             
