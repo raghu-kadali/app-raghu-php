@@ -5,7 +5,7 @@ import sys
 
 def get_mig_instances():
     try:
-        # Get instances with all details
+        # Get instances with all details including zone
         cmd = [
             "gcloud", "compute", "instances", "list",
             "--filter=name:php-instance-*", 
@@ -21,14 +21,22 @@ def get_mig_instances():
                 "vars": {
                     "ansible_user": "ubuntu",
                     "ansible_become": "yes",
-                    "ansible_connection": "local"  # This tells Ansible to run locally and use gcloud
+                    "ansible_connection": "local"
                 }
             }
         }
         
-        # Add instance names instead of IPs
+        # Add instance names and store zones as hostvars
         for instance in instances:
-            inventory["php_servers"]["hosts"].append(instance["name"])
+            instance_name = instance["name"]
+            zone = instance["zone"].split("/")[-1]
+            inventory["php_servers"]["hosts"].append(instance_name)
+            # Store zone as host variable
+            if "hostvars" not in inventory:
+                inventory["hostvars"] = {}
+            inventory["hostvars"][instance_name] = {
+                "zone": zone
+            }
         
         return inventory
         
