@@ -23,6 +23,9 @@ def get_mig_instances():
                     "ansible_become": "yes",
                     "ansible_connection": "local"
                 }
+            },
+            "_meta": {
+                "hostvars": {}
             }
         }
         
@@ -32,9 +35,7 @@ def get_mig_instances():
             zone = instance["zone"].split("/")[-1]
             inventory["php_servers"]["hosts"].append(instance_name)
             # Store zone as host variable
-            if "hostvars" not in inventory:
-                inventory["hostvars"] = {}
-            inventory["hostvars"][instance_name] = {
+            inventory["_meta"]["hostvars"][instance_name] = {
                 "zone": zone
             }
         
