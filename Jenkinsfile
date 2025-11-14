@@ -26,20 +26,15 @@ pipeline {
             }
         }
 
-       stage('Ansible Deploy') {
+stage('Ansible Deploy') {
     steps {
         sh '''
             cd php-deploy
             export GOOGLE_APPLICATION_CREDENTIALS=${GCP_KEY}
             
-            # Copy to home directory instead
-            gcloud compute scp --recurse ./ansible/ ansible-master:~/ansible/ --zone=us-central1-a --project=siva-477505
-            
-            # Run ansible from home directory
-            gcloud compute ssh ansible-master --zone=us-central1-a --project=siva-477505 --command="cd ~/ansible && chmod +x inventory-gcp.py && ansible-playbook -i inventory-gcp.py deploy-php.yml" --ssh-flag="-o StrictHostKeyChecking=no"
+            # Find and run ansible
+            gcloud compute ssh ubuntu@ansible-master --zone=us-central1-a --project=siva-477505 --command="find /home -name inventory-gcp.py -type f 2>/dev/null | head -1 | xargs dirname | xargs -I {} bash -c 'cd {} && chmod +x inventory-gcp.py && ansible-playbook -i inventory-gcp.py deploy-php.yml'" --ssh-flag="-o StrictHostKeyChecking=no"
         '''
     }
 }
-
-    }
 }
