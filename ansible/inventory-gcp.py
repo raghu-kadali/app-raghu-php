@@ -2,6 +2,7 @@
 import subprocess
 import json
 import sys
+import os
 
 def get_mig_instances():
     try:
@@ -13,13 +14,18 @@ def get_mig_instances():
         ]
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
         
+        # Get the current OS Login username from the Ansible master
+        user_cmd = ["gcloud", "compute", "os-login", "describe-profile", "--format=value(posixAccounts.username)"]
+        user_result = subprocess.run(user_cmd, capture_output=True, text=True, timeout=10)
+        username = user_result.stdout.strip()
+        
         inventory = {
             "php_servers": {
                 "hosts": [],
                 "vars": {
-                    "ansible_user": "ubuntu",  # Force ubuntu user
+                    "ansible_user": username,  # Use the OS Login username
                     "ansible_become": "yes",
-                    "ansible_ssh_common_args": "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o IdentitiesOnly=yes -o PreferredAuthentications=publickey"
+                    "ansible_ssh_common_args": "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
                 }
             }
         }
