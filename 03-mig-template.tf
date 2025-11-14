@@ -9,15 +9,7 @@ resource "google_compute_instance_template" "php_template_ubuntu" {
     disk_size_gb = 10
   }
 
-  metadata = {
-    enable-oslogin = "TRUE"
-    startup-script = <<-EOF
-      #!/bin/bash
-      # Set ubuntu user password
-      echo 'ubuntu:password123' | chpasswd
-    EOF
-  }
-
+metadata_startup_script = file("${path.module}/startup.sh")
   service_account {
     email = google_service_account.instance_sa.email
     scopes = ["https://www.googleapis.com/auth/cloud-platform"]
