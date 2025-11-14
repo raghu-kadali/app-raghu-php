@@ -1,34 +1,24 @@
 pipeline {
-    agent {
-        docker {
-            image 'hashicorp/terraform:latest'
-            args '-v $WORKSPACE:/workspace -w /workspace'
-        }
-    }
+    agent any
     stages {
-        stage('Checkout') {
+        stage('Download Terraform') {
             steps {
-                checkout scm
-            }
-        }
-        stage('GCP Authentication') {
-            steps {
-                withCredentials([file(credentialsId: 'gcp-service-account-key', variable: 'GCP_CREDENTIALS')]) {
-                    sh '''
-                        cp ${GCP_CREDENTIALS} /workspace/credentials.json
-                        export GOOGLE_APPLICATION_CREDENTIALS=/workspace/credentials.json
-                    '''
-                }
+                sh '''
+                    wget -O terraform.zip https://releases.hashicorp.com/terraform/1.5.7/terraform_1.5.7_linux_amd64.zip
+                    unzip -o terraform.zip
+                    chmod +x terraform
+                    ./terraform --version
+                '''
             }
         }
         stage('Terraform Setup') {
             steps {
-                sh 'terraform init -input=false'
+                sh './terraform init -input=false'
             }
         }
         stage('Terraform Apply') {
             steps {
-                sh 'terraform apply -auto-approve'
+                sh './terraform apply -auto-approve'
             }
         }
     }
