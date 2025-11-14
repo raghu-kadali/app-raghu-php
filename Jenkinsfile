@@ -6,7 +6,7 @@ pipeline {
     }
 
     stages {
-        stage('Terraform Destroy') {
+        stage('Terraform ') {
             steps {
                 sh '''
                     rm -rf php-deploy
