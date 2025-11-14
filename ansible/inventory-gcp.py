@@ -1,45 +1,51 @@
----
-- name: Configure PHP Application Server
-  hosts: localhost
-  become: yes
-  
-  tasks:
-    - name: Install Docker
-      apt:
-        name: docker.io
-        state: present
-        update_cache: yes
+#!/usr/bin/env python3
+import subprocess
+import json
+import sys
 
-    - name: Start and enable Docker service
-      systemd:
-        name: docker
-        state: started
-        enabled: yes
+def get_mig_instances():
+    try:
+        cmd = [
+            "gcloud", "compute", "instance-groups", "list-instances", 
+            "php-mig", "--region=us-central1", "--format=json"
+        ]
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+        
+        if result.returncode != 0:
+            return {"php_servers": {"hosts": []}}
+        
+        instances = json.loads(result.stdout)
+        
+        inventory = {
+            "php_servers": {
+                "hosts": [],
+                "vars": {
+                    "ansible_user": "sa_107639644271753149281",  # ← CORRECT USERNAME
+                    "ansible_become": "yes",
+                    "ansible_ssh_common_args": "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null",
+                    "ansible_ssh_private_key_file": "~/.ssh/google_compute_engine"
+                }
+            },
+            "all": {
+                "children": ["php_servers"]
+            }
+        }
+        
+        for instance in instances:
+            instance_name = instance["instance"].split("/")[-1]
+            hostname = f"{instance_name}.us-central1-f.c.siva-477505.internal"
+            inventory["php_servers"]["hosts"].append(hostname)
+        
+        return inventory
+        
+    except Exception as e:
+        print(f"Error: {e}", file=sys.stderr)
+        return {"php_servers": {"hosts": []}}
 
-    - name: Ensure old container is removed
-      shell: docker rm -f php-app || true
-      ignore_errors: yes
-
-    - name: Pull PHP application image from Artifact Registry
-      docker_image:
-        name: "{{ image_uri }}"
-        source: pull
-
-    - name: Run PHP application container
-      docker_container:
-        name: php-app
-        image: "{{ image_uri }}"
-        state: started
-        ports:
-          - "80:80"
-        log_driver: gcplogs
-        log_options:
-          gcp-project: "{{ project }}"
-
-    - name: Verify container is running
-      shell: docker ps | grep php-app
-      register: container_status
-      failed_when: container_status.rc != 0
-
-    - debug:
-        msg: "PHP application container is running successfully"
+if __name__ == "__main__":
+    if len(sys.argv) == 2 and sys.argv[1] == "--list":
+        print(json.dumps(get_mig_instances()))
+    elif len(sys.argv) == 2 and sys.argv[1] == "--host":
+        print(json.dumps({}))
+    else:
+        print(json.dumps({}))
