@@ -35,21 +35,8 @@ pipeline {
             }
         }
         
-        stage('Destroy Infrastructure?') {
-            steps {
-                script {
-                    def userInput = input(
-                        id: 'userInput', 
-                        message: 'Do you want to DESTROY the infrastructure?', 
-                        parameters: [
-                            choice(
-                                name: 'destroy',
-                                choices: ['NO', 'YES'],
-                                description: 'Select YES to destroy all resources'
-                            )
-                        ]
-                    )
-                     stage('Ansible Deploy') {
+
+        stage('Ansible Deploy') {
             steps {
                 dir('php-deploy') {
                     sh '''
@@ -62,11 +49,16 @@ pipeline {
                         gcloud compute scp --recurse ansible/ ansible-master:~/ --zone=${ZONE} --project=siva-477505
                         
                         # Run Ansible playbook
-                        gcloud compute ssh ansible-master --zone=${ZONE} --project=siva-477505 --command='
-                            cd ~/ansible
-                            chmod +x inventory-gcp.py
-                            ansible-playbook -i inventory-gcp.py deploy-php.yml
-                        '
+                        gcloud compute ssh ansible-master \
+                        --zone=us-central1-a \
+                        --project=siva-477505 \
+                        --command="cd ~/ansible && chmod +x inventory-gcp.py && ansible-playbook -i ./inventory-gcp.py deploy-php.yml"
+
+                     #   gcloud compute ssh ansible-master --zone=${ZONE} --project=siva-477505 --command='
+                     #       cd ~/ansible
+                     #       chmod +x inventory-gcp.py
+                     #       ansible-playbook -i inventory-gcp.py deploy-php.yml
+                     #   '
                     '''
                 }
             }
