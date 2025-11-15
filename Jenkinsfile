@@ -35,7 +35,6 @@ pipeline {
             }
         }
         
-
         stage('Ansible Deploy') {
             steps {
                 dir('php-deploy') {
@@ -50,28 +49,10 @@ pipeline {
                         
                         # Run Ansible playbook
                         gcloud compute ssh ansible-master \
-                        --zone=us-central1-a \
-                        --project=siva-477505 \
-                        --command="cd ~/ansible && chmod +x inventory-gcp.py && ansible-playbook -i ./inventory-gcp.py deploy-php.yml"
-
-                     #   gcloud compute ssh ansible-master --zone=${ZONE} --project=siva-477505 --command='
-                     #       cd ~/ansible
-                     #       chmod +x inventory-gcp.py
-                     #       ansible-playbook -i inventory-gcp.py deploy-php.yml
-                     #   '
+                          --zone=${ZONE} \
+                          --project=siva-477505 \
+                          --command="cd ~/ansible && chmod +x inventory-gcp.py && ansible-playbook -i ./inventory-gcp.py deploy-php.yml"
                     '''
-                }
-            }
-        }
-        
-                    if (userInput == 'YES') {
-                        dir('php-deploy') {
-                            sh '''
-                                export GOOGLE_APPLICATION_CREDENTIALS=${GCP_KEY}
-                                ./terraform destroy -auto-approve
-                            '''
-                        }
-                    }
                 }
             }
         }
