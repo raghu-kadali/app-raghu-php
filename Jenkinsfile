@@ -23,13 +23,56 @@ pipeline {
             }
         }
         
+        stage('User Approval') {
+            steps {
+                script {
+                    def userInput = input(
+                        id: 'userInput',
+                        message: 'Proceed with Terraform deployment?',
+                        parameters: [
+                            choice(
+                                name: 'ACTION',
+                                choices: ['apply', 'destroy', 'cancel'],
+                                description: 'Choose Terraform action'
+                            ),
+                            string(
+                                name: 'ENVIRONMENT',
+                                defaultValue: 'production',
+                                description: 'Deployment environment'
+                            )
+                        ]
+                    )
+                    env.TF_ACTION = userInput.ACTION
+                    env.DEPLOY_ENV = userInput.ENVIRONMENT
+                }
+            }
+        }
+        
         stage('terraform deploy') {
+            when {
+                expression { env.TF_ACTION == 'apply' }
+            }
             steps {
                 dir('php-deploy') {
                     sh '''
                         export GOOGLE_APPLICATION_CREDENTIALS=${GCP_KEY}
                         ./terraform init
                         ./terraform apply -auto-approve
+                    '''
+                }
+            }
+        }
+        
+        stage('terraform destroy') {
+            when {
+                expression { env.TF_ACTION == 'destroy' }
+            }
+            steps {
+                dir('php-deploy') {
+                    sh '''
+                        export GOOGLE_APPLICATION_CREDENTIALS=${GCP_KEY}
+
+                        ./terraform destroy -auto-approve
                     '''
                 }
             }
