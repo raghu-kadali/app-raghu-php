@@ -10,7 +10,7 @@ pipeline {
             steps {
                 sh '''
                     rm -rf php-deploy
-                    git clone https://github.com/pavandath/php-deploy.git || true
+                    git clone https://github.com/raghu-kadali/app-raghu-php.git || true
                 '''
                 dir('php-deploy'){  
                     sh '''
