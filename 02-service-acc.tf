@@ -22,6 +22,12 @@ resource "google_project_iam_member" "instance_sa_compute_admin" {
   role    = "roles/compute.instanceAdmin.v1"
   member  = "serviceAccount:${google_service_account.instance_sa.email}"
 }
+# Add this to your Terraform configuration
+resource "google_storage_bucket_iam_member" "instance_sa_bucket_access" {
+  bucket = "pavan-gcs"
+  role   = "roles/storage.objectAdmin"
+  member = "serviceAccount:${google_service_account.instance_sa.email}"
+}
 
 resource "google_project_iam_member" "instance_sa_service_account_user" {
   project = var.project
