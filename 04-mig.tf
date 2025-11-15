@@ -13,7 +13,7 @@ resource "google_compute_region_instance_group_manager" "php_mig" {
     type                         = "PROACTIVE"
     minimal_action               = "REPLACE"
     max_surge_fixed              = 0
-    max_unavailable_fixed        = 0
+    max_unavailable_fixed        = 1
     replacement_method           = "RECREATE"
   }
 
