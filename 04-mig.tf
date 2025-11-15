@@ -9,7 +9,13 @@ resource "google_compute_region_instance_group_manager" "php_mig" {
 
   target_size = 1
 
-
+  update_policy {
+    type                         = "PROACTIVE"
+    minimal_action               = "REPLACE"
+    max_surge_fixed              = 1
+    max_unavailable_fixed        = 0
+    replacement_method           = "RECREATE"
+  }
 
   named_port {
     name = "http"
